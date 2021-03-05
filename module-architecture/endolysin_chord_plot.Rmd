@@ -1,0 +1,301 @@
+---
+title: "PhaLP Domain Adjacency Exploration"
+author: "Steff Taelman"
+output:
+  pdf_document: default
+  html_document:
+    df_print: paged
+---
+```{r load packages}
+library(circlize)
+library(reshape2)
+```
+
+```{r load in data}
+### Empirical data
+dat <- read.csv("empirical_adjmat.csv", header = TRUE)
+emp_adjmat <- as.matrix(dat[ , -1])
+
+### Theoretical data
+dat <- read.csv("theoretical_adjmat.csv", header = TRUE)
+theo_adjmat <- as.matrix(dat[ , -1])
+
+phalp_names_sorted <- c('CW_7                                                   ', 'CW_1                                                    ',
+                        'DUF3597                                            ', 'LGFP                                                  ',
+                        'LysM                                                  ', 'PG_1                                                   ',
+                        'PG_3                                                   ', 'PSA_CBD                                             ', 
+                        'SH3                                                     ', 'SLH                                                    ', 
+                        'SPOR                                                  ', 'ZoocinA_TRD                                      ', 
+                        'Ami_2                                                ', 'Ami_3                                                 ', 
+                        'Ami_5                                                 ', 'Ami02_C                                             ',
+                        'CHAP                                                 ', 'NLPC_P60                                          ', 
+                        'PET_C39                                            ', 'PET_C70                                            ',
+                        'PET_M15                                           ', 'PET_M23                                           ',
+                        'PET_U40                                           ', 'YkuD                                                 ',
+                        'GLUCO                                               ', 'DUF1906                                            ',
+                        '                                                  GH25', '                                                 GH46', 
+                        '                                                GH108', '                                                  GH19',
+                        '                                            GPW_gp25', '                                                MUR',
+                        '                                          Pesticin_C', '                               pesticin_lyz_like2',
+                        '                                                  GH24', '                                     LT_GEWL_like', 
+                        '                                       SLT related', '                                              Hydro 2',
+                        '                                             DPBB_1', '                                               Ldt_C',
+                        '                                                    3D', '                                          Trypsin_2',
+                        '                                              NUDIX', '                                   Hom_end_hint',
+                        '                                                 YqaJ', '                                     Delta_COP_N', 
+                        '                                                Big_2', '                                       Caud_tail_N',
+                        '                                               Gp5_C', '                                         Gp5_OB_N',
+                        '                                           MopB_CT', '                                                 MPN',
+                        '           Lambda_GpH_tape_meas_C', '                             Phage_tape_meas',
+                        '                           Tail_accessory_Gp4', '                                               TMP_2',
+                        '                                  Ubl_MoaD_like', '                                       EF_HAND_2',
+                        '                                          Prefoldin', '                                            S74_ICA', 
+                        '                                              SNase', '                                                 GH66',
+                        '                               Helicase_ATP_bd', '                                       Helicase_C', 
+                        '          ABC 6TM Pgp ABCB1 D1 like', '                          ABC_6TM_PrtD_like', 
+                        '                                  ATP_synt_Fo_b', '                                           MTases',
+                        '                                          bZIP_YAP', '                                           CBM_4_9',
+                        '                                                  Tail_3', '                                                  MFS',
+                        '                        MFS_MdfA_MDR_like', '                                 MFS_MefA_like', 
+                        '                        MFS_MMR_MDR_like', '                                  MFS_NepI_like', 
+                        '                       MFS_SLC46_TetA_like', '                                 MFS_YcaD_like', 
+                        '                                          MFS_YjiJ', 'Collagen                                          ', 
+                        'AA_TRNA_LIGASE_II_GLYAB              ', 'ART                                                  ',
+                        'ART_PolyVal                                     ', 'Beta_lactamase2                             ',  
+                        'CBS_archAMPK_gamma_repeat2      ', 'Cu_amine_oxidN1                              ', 
+                        'DDE_Tnp_1_6                                      ', 'DNA_terminal_Gp3                           ', 
+                        'DUF4185                                          ', 'GNAT                                               ',
+                        'Gro1PDH                                          ', 'ILEI                                                   ',
+                        'InPase                                              ', 'INTEIN_N_TER                                   ',
+                        'LPD3                                                 ', 'LPD37                                               ', 
+                        'LPD38                                               ', 'LPD39                                               ',
+                        'N6_Mtase                                         ', 'PBECR1                                            ',
+                        'Phage_lambda_GpS_holin                ', 'PROKAR_LIPOPROTEIN                    ',
+                        'RECA_3                                             ', 'Terminase_L_N                                 ',
+                        'Transposase_InsH_N                         ')
+
+### Set names
+rownames(emp_adjmat) <- phalp_names_sorted
+colnames(emp_adjmat) <- phalp_names_sorted
+rownames(theo_adjmat) <- phalp_names_sorted
+colnames(theo_adjmat) <- phalp_names_sorted
+```
+
+```{r colors}
+CBDs <- c('CW_7                                                   ', 'CW_1                                                    ',
+          'DUF3597                                            ', 'LGFP                                                  ',
+          'LysM                                                  ', 'PG_1                                                   ',
+          'PG_3                                                   ', 'PSA_CBD                                             ', 
+          'SH3                                                     ', 'SLH                                                    ', 
+          'SPOR                                                  ', 'ZoocinA_TRD                                      ')
+
+EADs <- c('Ami_2                                                ', 'Ami_3                                                 ', 
+          'Ami_5                                                 ', 'Ami02_C                                             ',
+          'CHAP                                                 ', 'NLPC_P60                                          ', 
+          'PET_C39                                            ', 'PET_C70                                            ',
+          'PET_M15                                           ', 'PET_M23                                           ',
+          'PET_U40                                           ', 'YkuD                                                 ',
+          'GLUCO                                               ', 'DUF1906                                            ',
+          'GH25                                                  ', '                                                 GH46', 
+          '                                                GH108', '                                                  GH19',
+          '                                            GPW_gp25', '                                                MUR',
+          '                                          Pesticin_C', '                               pesticin_lyz_like2',
+          '                                                  GH24', '                                     LT_GEWL_like', 
+          '                                       SLT_related', '                                              Hydro_2',
+          '                                             DPBB_1')
+
+gridcolors_names <- c()
+c <- 0
+for (i in phalp_names_sorted){
+  if (c < length(CBDs)){
+    gridcolors_names[[i]] <- "#BF211E"
+    c <- c + 1
+  } else if (c < length(CBDs)+length(EADs)){
+    gridcolors_names[[i]] <- "#008EAA"
+    c <- c + 1
+  } else {
+    gridcolors_names[[i]] <- "#FF9505"
+    c <- c + 1
+  }
+}
+
+c <- 0
+linkcolors_theo = c()
+for (i in phalp_names_sorted){
+  if (c < length(CBDs)){
+    linkcolors_theo[[i]] <- rgb(191,33,30, alpha=90, max=255)
+    c <- c + 1
+  } else if (c < length(CBDs)+length(EADs)){
+    linkcolors_theo[[i]] <- rgb(0,142,170,1, alpha=90, max=255)
+    c <- c + 1
+  } else {
+    linkcolors_theo[[i]] <- rgb(255,149,5, alpha=90, max=255)
+    c <- c + 1
+  }
+}
+
+c <- 0
+linkcolors_emp = c()
+for (i in phalp_names_sorted){
+  if (c < length(CBDs)){
+    linkcolors_emp[[i]] <- rgb(191,33,30, alpha=110, max=255)
+    c <- c + 1
+  } else if (c < length(CBDs)+length(EADs)){
+    linkcolors_emp[[i]] <- rgb(0,142,170,1, alpha=110, max=255)
+    c <- c + 1
+  } else {
+    linkcolors_emp[[i]] <- rgb(255,149,5, alpha=110, max=255)
+    c <- c + 1
+  }
+}
+```
+
+
+## On frequency
+Apart from the occurrence of specific architectures in phage lytic proteins, we also look at the frequency with which architectures are observed and annotated.
+
+### Endolysins
+```{r load in freq data}
+### Empirical abundance data
+dat <- read.csv("empirical_adjmat_endolysin_abundance.csv", header = TRUE)
+emp_ab_endo_adjmat <- as.matrix(dat[ , -1])
+
+endo_names_sorted <- c('CW_7                                                   ', 'CW_1                                                    ',
+                        'DUF3597                                            ', 'LGFP                                                  ',
+                        '                                                  LysM', '                                                   PG_1',
+                        '                                                   PG_3', '                                             PSA_CBD', 
+                        '                                                     SH3', '                                                    SLH', 
+                        '                                                  SPOR', '                                      ZoocinA_TRD', 
+                        '                                                Ami_2', '                                                 Ami_3', 
+                        '                                                 Ami_5', '                                             Ami02_C',
+                        '                                                 CHAP', '                                          NLPC_P60', 
+                        '                                            PET_C39', '                                            PET_C70',
+                        '                                           PET_M15', 'PET_M23                                           ',
+                        'PET_U40                                           ', 'YkuD                                                 ',
+                        'GLUCO                                               ', 'DUF1906                                            ',
+                        'GH25                                                  ', 'GH108                                                ', 
+                        'GH19                                                  ', 'MUR                                                ',
+                        'Pesticin_C                                          ', 'pesticin_lyz_like2                               ',
+                        'GH24                                                  ', 'LT_GEWL_like                                     ', 
+                        'SLT_related                                       ', '3D                                                    ', 
+                        'NUDIX                                              ', 'EF_HAND_2                                       ',
+                        'AA_TRNA_LIGASE_II_GLYAB              ', 'Cu_amine_oxidN1                              ', 
+                        'DUF4185                                          ', 'Phage_lambda_GpS_holin                ', 
+                        'PROKAR_LIPOPROTEIN                    ', 'RECA_3                                             ')
+
+rownames(emp_ab_endo_adjmat) <- endo_names_sorted
+colnames(emp_ab_endo_adjmat) <- endo_names_sorted
+
+emp_ab_endo_adjlist <- melt(emp_ab_endo_adjmat)
+emp_ab_endo_adjlist <- emp_ab_endo_adjlist[emp_ab_endo_adjlist[, "value"] >= 1,]
+
+gridcolors_names <- c()
+c <- 0
+for (i in endo_names_sorted){
+  if (c < length(CBDs)){
+    gridcolors_names[[i]] <- "#BF211E"
+    c <- c + 1
+  } else if (c < length(CBDs)+23){
+    gridcolors_names[[i]] <- "#008EAA"
+    c <- c + 1
+  } else {
+    gridcolors_names[[i]] <- "#FF9505"
+    c <- c + 1
+  }
+}
+```
+
+```{r abundance architectures}
+svg("endo_observed_architectures_ab.svg", width = 20, height = 20, pointsize = 13)
+circos.par(canvas.xlim = c(-1.25, 1.25), canvas.ylim = c(-1.25, 1.25))
+chordDiagram(emp_ab_endo_adjlist, grid.col = gridcolors_names, annotationTrack = 'grid',
+             annotationTrackHeight = 0.01, directional = -1, order = endo_names_sorted, 
+             direction.type = "diffHeight", diffHeight = convert_height(10, "mm"))
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  xlim = get.cell.meta.data('xlim')
+  ylim = get.cell.meta.data('ylim')
+  sector.name = get.cell.meta.data('sector.index')
+  circos.text(mean(xlim), ylim[1] + .1, sector.name, facing = 'clockwise', niceFacing = TRUE, adj = c(-0.03, 0.5), cex = 1)
+}, bg.border = NA)
+dev.off()
+circos.clear()
+```
+Fig. 1: All architectures observed in endolysins and their abundance denoted by the thickness of their links. Links start closest to the nodes and end somewhat farther away. Links also carry the color of the node they start at.
+
+### VALs
+```{r load in freq data}
+### Empirical abundance data
+dat <- read.csv("empirical_adjmat_val_abundance.csv", header = TRUE)
+emp_ab_val_adjmat <- as.matrix(dat[ , -1])
+
+val_names_sorted <- c('LysM                                                  ', 'Ami_2                                                ', 
+                      'CHAP                                                 ', 'NLPC_P60                                                 ', 
+                      'PET_M15                                           ', 'PET_M23                                           ',
+                      'GLUCO                                               ', '                                                GH108', 
+                      '                                                  GH19', '                                          Pesticin_C', 
+                      '                                                  GH24', '                                     LT_GEWL_like', 
+                      '                                       SLT related', '                                              Hydro 2',
+                      '                                             DPBB_1', '                                                    3D', 
+                      '                                          Trypsin_2', '                                   Hom_end_hint',
+                      '                                                 YqaJ', '                                       Caud_tail_N',
+                      '                                               Gp5_C', '                                         Gp5_OB_N',
+                      '                                           MopB_CT', 'MPN                                                 ',
+                      'Lambda_GpH_tape_meas_C           ', 'Phage_tape_meas                             ',
+                      'TMP_2                                               ', 'EF_HAND_2                                       ',
+                      'Prefoldin                                          ', 'S74_ICA                                            ', 
+                      'SNase                                              ', 'Helicase_ATP_bd                               ', 
+                      'Helicase_C                                       ', 'ABC_6TM_Pgp_ABCB1_D1_like          ', 
+                      'ABC_6TM_PrtD_like                          ', 'ATP_synt_Fo_b                                  ', 
+                      'MTases                                           ', 'bZIP_YAP                                          ', 
+                      'CBM_4_9                                           ', 'MFS                                                  ',
+                      'MFS_MdfA_MDR_like                        ', 'MFS_MefA_like                                 ', 
+                      'MFS_MMR_MDR_like                        ', 'MFS_NepI_like                                  ', 
+                      'MFS_SLC46_TetA_like                       ', 'MFS_YcaD_like                                 ', 
+                      'MFS_YjiJ                                          ', 'Collagen                                          ',
+                      'ART_PolyVal                                     ', 'Beta_lactamase2                             ',  
+                      'CBS_archAMPK_gamma_repeat2      ', 'DNA_terminal_Gp3                           ', 
+                      'GNAT                                               ', 'ILEI                                                   ',
+                      'InPase                                              ', 'INTEIN_N_TER                                   ',
+                      'LPD3                                                 ', 'LPD37                                               ', 
+                      'LPD38                                               ', 'LPD39                                               ',
+                      'N6_Mtase                                         ', 'PBECR1                                            ',
+                      'PROKAR_LIPOPROTEIN                    ', 'Terminase_L_N                                 ')
+
+rownames(emp_ab_val_adjmat) <- val_names_sorted
+colnames(emp_ab_val_adjmat) <- val_names_sorted
+
+emp_ab_val_adjlist <- melt(emp_ab_val_adjmat)
+emp_ab_val_adjlist <- emp_ab_val_adjlist[emp_ab_val_adjlist[, "value"] >= 1,]
+
+gridcolors_names <- c()
+c <- 0
+for (i in val_names_sorted){
+  if (c < 1){
+    gridcolors_names[[i]] <- "#BF211E"
+    c <- c + 1
+  } else if (c < 1+14){
+    gridcolors_names[[i]] <- "#008EAA"
+    c <- c + 1
+  } else {
+    gridcolors_names[[i]] <- "#FF9505"
+    c <- c + 1
+  }
+}
+```
+
+```{r abundance architectures}
+svg("val_observed_architectures_ab.svg", width = 20, height = 20, pointsize = 13)
+circos.par(canvas.xlim = c(-1.25, 1.25), canvas.ylim = c(-1.25, 1.25))
+chordDiagram(emp_ab_val_adjlist, grid.col = gridcolors_names, annotationTrack = 'grid',
+             annotationTrackHeight = 0.01, directional = -1, order = val_names_sorted, 
+             direction.type = "diffHeight", diffHeight = convert_height(10, "mm"))
+circos.track(track.index = 1, panel.fun = function(x, y) {
+  xlim = get.cell.meta.data('xlim')
+  ylim = get.cell.meta.data('ylim')
+  sector.name = get.cell.meta.data('sector.index')
+  circos.text(mean(xlim), ylim[1] + .1, sector.name, facing = 'clockwise', niceFacing = TRUE, adj = c(-0.03, 0.5), cex = 1)
+}, bg.border = NA)
+dev.off()
+circos.clear()
+```
+Fig. 2: All architectures observed in VALs and their abundance denoted by the thickness of their links. Links start closest to the nodes and end somewhat farther away. Links also carry the color of the node they start at.
